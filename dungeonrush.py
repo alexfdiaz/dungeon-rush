@@ -1,6 +1,7 @@
-import pygame, sys
+import pygame
 from scripts.settings import Settings
 from scripts.assets import Assets
+from scripts.scene import MainScene
 
 class Game:
 	def __init__(self):
@@ -13,88 +14,43 @@ class Game:
 		self.display = pygame.Surface((self.settings.DIS_WIDTH, self.settings.DIS_HEIGHT))
 		pygame.display.set_caption(self.settings.CAPTION)
 		pygame.display.set_icon(pygame.image.load('icons/icon.png'))
+		pygame.mouse.set_visible(False)
+		pygame.mixer.music.load('resources/audio/bgsong.wav')
+		pygame.mixer.music.set_volume(0.1)
+		pygame.mixer.music.play(-1)
+
 		self.clock = pygame.time.Clock()
 		self.frames = 0
 
+		self.current_stage = 0
+
+		self.current_scene = MainScene()
+
 	def render(self):
 		self.display.fill(self.settings.BG_COLOR)
-		self.assets.bg.render(self.display)
 
-		for rect in self.assets.world.rects:
-				#pygame.draw.rect(self.display, (255, 0, 0), rect)
-				pass
-
-		self.assets.logo.render(self.display)
-
-		self.assets.play.render(self.display)
-		self.assets.options.render(self.display)
-
-		self.assets.player.render(self.display, self.frame)
+		self.current_scene.render(self.display)
 
 		self.window.blit(pygame.transform.scale(self.display, (self.settings.WIN_WIDTH, self.settings.WIN_HEIGHT)), (0, 0))
 		pygame.display.flip()
 
-	def check_keydown(self, event):
-		if event.type == pygame.KEYDOWN:
-			if event.key == pygame.K_w:
-				self.assets.player.moving_up = True
-			if event.key == pygame.K_s:
-				self.assets.player.moving_down = True
-			if event.key == pygame.K_a:
-				self.assets.player.moving_left = True
-				self.assets.player.facing_right = False
-				self.assets.player.facing_left = True
-			if event.key == pygame.K_d:
-				self.assets.player.moving_right = True
-				self.assets.player.facing_right = True
-				self.assets.player.facing_left = False
-
-	def check_keyup(self, event):
-		if event.type == pygame.KEYUP:
-			if event.key == pygame.K_ESCAPE:
-				sys.exit()
-			if event.key == pygame.K_w:
-				self.assets.player.moving_up = False
-			if event.key == pygame.K_s:
-				self.assets.player.moving_down = False
-			if event.key == pygame.K_a:
-				self.assets.player.moving_left = False
-			if event.key == pygame.K_d:
-				self.assets.player.moving_right = False
-
-	def check_mousedown(self, event):
-		if event.type == pygame.MOUSEBUTTONDOWN:
-			x, y = pygame.mouse.get_pos()
-			mouse_pos = (x // 4, y // 4)
-			if self.assets.play.rect.collidepoint(mouse_pos):
-				self.assets.play.pressed = True
-			if self.assets.options.rect.collidepoint(mouse_pos):
-				self.assets.options.pressed = True
-
-	def check_mouseup(self, event):
-		if event.type == pygame.MOUSEBUTTONUP:
-			self.assets.play.pressed = False
-			self.assets.options.pressed = False
-
 	def run(self):
 		self.frame = 0
-		bg_shift = 0
+		self.alpha = 1
+		
 		while True:
 			self.clock.tick(self.settings.FRAME_RATE)
-			for event in pygame.event.get():
-				if event.type == pygame.QUIT:
-					sys.exit()
+			self.events = pygame.event.get()
+			self.mouse_pos = pygame.mouse.get_pos()
 
-				self.check_keydown(event)
-				self.check_keyup(event)
-				self.check_mousedown(event)
-				self.check_mouseup(event)
+			for event in self.events:
+				if self.current_scene.scene_id == 0:
+					if event.type == pygame.KEYUP:
+						if event.key == pygame.K_SPACE:
+							self.current_scene = self.current_scene.next_scene
 
-			self.assets.player.update_pos(self.assets.world.rects)
+			self.current_scene.run(self.events, self.mouse_pos)
 
-			if self.frame % 5 == 0:
-				self.assets.bg.rect.y = (-self.settings.DIS_HEIGHT + bg_shift % 40)
-				bg_shift += 1
 
 			self.render()
 			self.frame += 1

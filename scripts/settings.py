@@ -6,7 +6,6 @@ class Settings:
 		self.DIS_HEIGHT = self.WIN_HEIGHT // 4
 		self.TILE_SIZE = 8
 		self.CAPTION = 'DUNGEON RUSH'
-		self.FONT = 'resources/fonts/font.ttf'
 		self.FRAME_RATE = 60
 		self.TITLE_COLOR = (255, 0, 0)
 
